@@ -39,30 +39,32 @@ class PostAnalysisCollector:
         current_offset = 0
         needed_posts = []
 
-        while earliest_post_date >= start_date:
+        with requests.session() as session:
 
-            response = requests.get('https://api.vk.com/method/wall.get',
-                                    params={'access_token': self.TOKEN,
-                                            'domain': self.DOMAIN,
-                                            'v': self.VERSION,
-                                            'count': self.MAX_PARSE_VALUE,
-                                            'offset': current_offset,
-                                            'filter': str('owner')
-                                            }).json()['response']['items']
+            while earliest_post_date >= start_date:
 
-            for post in response:
-                post_date = datetime.fromtimestamp(post['date'])
+                response = session.get('https://api.vk.com/method/wall.get',
+                                       params={'access_token': self.TOKEN,
+                                               'domain': self.DOMAIN,
+                                               'v': self.VERSION,
+                                               'count': self.MAX_PARSE_VALUE,
+                                               'offset': current_offset,
+                                               'filter': str('owner')
+                                               }).json()['response']['items']
 
-                if post_date < earliest_post_date:
-                    earliest_post_date = post_date
+                for post in response:
+                    post_date = datetime.fromtimestamp(post['date'])
 
-                if start_date <= post_date <= end_date:
-                    needed_posts.append(post)
+                    if post_date < earliest_post_date:
+                        earliest_post_date = post_date
 
-            current_offset += self.MAX_PARSE_VALUE
+                    if start_date <= post_date <= end_date:
+                        needed_posts.append(post)
 
-            if len(response) < self.MAX_PARSE_VALUE:
-                break
+                current_offset += self.MAX_PARSE_VALUE
+
+                if len(response) < self.MAX_PARSE_VALUE:
+                    break
 
         return needed_posts
 
@@ -79,13 +81,3 @@ class PostAnalysisCollector:
                           in self.__get_posts_in_time_period(start_date, end_date, date_time_format=date_time_format)]
 
         return sorted(post_statistic, key=lambda post: post['timestamp'])
-
-
-collector = PostAnalysisCollector(
-    "vk1.a.W9u_U0QvOMhuW_WVLw3MfLHy9O7X2dziHDTYt2yOLtiXSvpCihODP_KHSzxpLArbKuvybK6S5kzC08pOVVfJzYLtGWErshvxuKMzo-aZU2BXozZXZJKAwtAoSCHyW1_0la9XDT2Bgqy3HkTbtYGBcyABNaAqFdbzbouEFyTmrDs5JIAqAErpmyMEvc6wdn7G",
-    "fmf_ipmm", 5.199)
-
-result = collector.get_analysis_by_period('13/05/2024', '16/08/2024')
-
-for i in result:
-    print(i)
