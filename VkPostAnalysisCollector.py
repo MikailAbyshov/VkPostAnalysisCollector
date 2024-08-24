@@ -18,9 +18,9 @@ class PostAnalysisCollector:
 
     # VERSION - желательно 5.199, ибо протестировано
     def __init__(self, TOKEN: str, DOMAIN: str, VERSION: str = '5.199'):
-        self.TOKEN: str = TOKEN
-        self.DOMAIN: str = DOMAIN
-        self.VERSION: str = VERSION
+        self.TOKEN = TOKEN
+        self.DOMAIN = DOMAIN
+        self.VERSION = VERSION
 
     def __get_likes_count(self, post: dict[str, Any]) -> int:
         return post["likes"]["count"]
