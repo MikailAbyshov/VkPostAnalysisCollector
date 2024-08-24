@@ -1,6 +1,6 @@
 from datetime import datetime
 import requests
-from typing import List, Dict, Any
+from typing import Any
 
 
 class PostAnalysisCollector:
@@ -13,35 +13,32 @@ class PostAnalysisCollector:
         self.DOMAIN: str = DOMAIN
         self.VERSION: str = VERSION
 
-    def __get_likes_count(self, post: Dict[str, Any]) -> int:
+    def __get_likes_count(self, post: dict[str, Any]) -> int:
         return post["likes"]["count"]
 
-    def __get_post_utc_time(self, post: Dict[str, Any], date_time_format: str) -> str:
+    def __get_post_utc_time(self, post: dict[str, Any]) -> str:
         date = datetime.fromtimestamp(post["date"])
-        return date.strftime(date_time_format)
+        return date.strftime("%d/%m/%Y")
 
-    def __get_reposts_count(self, post: Dict[str, Any]) -> int:
+    def __get_reposts_count(self, post: dict[str, Any]) -> int:
         return post["reposts"]["count"]
 
-    def __get_post_timestamp(self, post: Dict[str, Any]) -> int:
+    def __get_post_timestamp(self, post: dict[str, Any]) -> int:
         return post['date']
 
-    def __get_views_count(self, post: Dict[str, Any]) -> int:
+    def __get_views_count(self, post: dict[str, Any]) -> int:
         return post["views"]["count"]
 
-    def __get_comments_count(self, post: Dict[str, Any]) -> int:
+    def __get_comments_count(self, post: dict[str, Any]) -> int:
         return post["comments"]["count"]
 
-    def __get_posts_in_time_period(self, start_date: str, end_date: str, date_time_format: str = '%d/%m/%Y') \
-            -> List[Dict[str, Any]]:
-        start_date = datetime.strptime(start_date, date_time_format)
-        end_date = datetime.strptime(end_date, date_time_format)
+    def __get_posts_in_time_period(self, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
 
         earliest_post_date = datetime.max
         current_offset = 0
-        needed_posts: List[Dict[str, Any]] = []
+        needed_posts = []
 
-        with requests.Session() as session:  # Исправлено на requests.Session() вместо requests.session()
+        with requests.Session() as session:
             while earliest_post_date >= start_date:
                 response = session.get('https://api.vk.com/method/wall.get',
                                        params={'access_token': self.TOKEN,
@@ -68,21 +65,20 @@ class PostAnalysisCollector:
 
         return needed_posts
 
-    def __get_post_stats(self, post: Dict[str, Any], date_time_format: str) -> Dict[str, Any]:
+    def __get_post_stats(self, post: dict[str, Any]) -> dict[str, Any]:
         return {
             "likes": self.__get_likes_count(post),
             "reposts": self.__get_reposts_count(post),
             "views": self.__get_views_count(post),
             "comments": self.__get_comments_count(post),
-            "dateUTC": self.__get_post_utc_time(post, date_time_format=date_time_format),
+            "dateUTC": self.__get_post_utc_time(post),
             "timestamp": self.__get_post_timestamp(post)
         }
 
-    def get_analysis_by_period(self, start_date: str, end_date: str, date_time_format: str = '%d/%m/%Y') \
-            -> List[Dict[str, Any]]:
-        post_statistic: List[Dict[str, Any]] = [
-            self.__get_post_stats(post, date_time_format=date_time_format)
-            for post in self.__get_posts_in_time_period(start_date, end_date, date_time_format=date_time_format)
+    def get_analysis_by_period(self, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
+        post_statistic = [
+            self.__get_post_stats(post)
+            for post in self.__get_posts_in_time_period(start_date, end_date)
         ]
 
         return sorted(post_statistic, key=lambda post: post['timestamp'])
