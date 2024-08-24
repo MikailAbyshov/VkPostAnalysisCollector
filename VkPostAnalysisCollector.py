@@ -1,6 +1,7 @@
 from datetime import datetime
 import requests
 from typing import Any
+from collections import namedtuple
 
 
 class PostAnalysisCollector:
@@ -65,20 +66,29 @@ class PostAnalysisCollector:
 
         return needed_posts
 
-    def __get_post_stats(self, post: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "likes": self.__get_likes_count(post),
-            "reposts": self.__get_reposts_count(post),
-            "views": self.__get_views_count(post),
-            "comments": self.__get_comments_count(post),
-            "dateUTC": self.__get_post_utc_time(post),
-            "timestamp": self.__get_post_timestamp(post)
-        }
+    def __get_post_stats(self, post: dict[str, Any]) \
+            -> namedtuple(typename="PostStats",
+                          field_names=['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp']):
 
-    def get_analysis_by_period(self, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
+        PostStats = namedtuple('PostStats',
+                               ['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp'])
+
+        return PostStats(
+            likes=self.__get_likes_count(post),
+            reposts=self.__get_reposts_count(post),
+            views=self.__get_views_count(post),
+            comments=self.__get_comments_count(post),
+            dateUTC=self.__get_post_utc_time(post),
+            timestamp=self.__get_post_timestamp(post)
+        )
+
+    def get_analysis_by_period(self, start_date: datetime, end_date: datetime) \
+            -> list[namedtuple(typename="PostStats",
+                               field_names=['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp'])]:
+
         post_statistic = [
             self.__get_post_stats(post)
             for post in self.__get_posts_in_time_period(start_date, end_date)
         ]
 
-        return sorted(post_statistic, key=lambda post: post['timestamp'])
+        return sorted(post_statistic, key=lambda post: post.timestamp)
