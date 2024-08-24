@@ -1,7 +1,15 @@
 from datetime import datetime
 import requests
-from typing import Any
-from collections import namedtuple
+from typing import Any, NamedTuple
+
+
+class PostStats(NamedTuple):
+    likes: int
+    reposts: int
+    views: int
+    comments: int
+    dateUTC: str
+    timestamp: int
 
 
 class PostAnalysisCollector:
@@ -66,12 +74,7 @@ class PostAnalysisCollector:
 
         return needed_posts
 
-    def __get_post_stats(self, post: dict[str, Any]) \
-            -> namedtuple(typename="PostStats",
-                          field_names=['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp']):
-
-        PostStats = namedtuple('PostStats',
-                               ['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp'])
+    def __get_post_stats(self, post: dict[str, Any]) -> PostStats:
 
         return PostStats(
             likes=self.__get_likes_count(post),
@@ -82,13 +85,11 @@ class PostAnalysisCollector:
             timestamp=self.__get_post_timestamp(post)
         )
 
-    def get_analysis_by_period(self, start_date: datetime, end_date: datetime) \
-            -> list[namedtuple(typename="PostStats",
-                               field_names=['likes', 'reposts', 'views', 'comments', 'dateUTC', 'timestamp'])]:
+    def get_analysis_by_period(self, start_date: datetime, end_date: datetime) -> list[PostStats]:
 
         post_statistic = [
             self.__get_post_stats(post)
             for post in self.__get_posts_in_time_period(start_date, end_date)
         ]
 
-        return sorted(post_statistic, key=lambda post: post.timestamp)
+        return sorted(post_statistic, key=lambda post: getattr(post, 'timestamp'))
